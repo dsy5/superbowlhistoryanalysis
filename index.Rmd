@@ -1,0 +1,233 @@
+---
+title: "Super Bowl History Analysis"
+description: |
+  Welcome to the website. I hope you enjoy it!
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Learn more about creating websites with Distill at:
+# https://rstudio.github.io/distill/website.html
+
+# Learn more about publishing to GitHub Pages at:
+# https://rstudio.github.io/distill/publish_website.html#github-pages
+
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(gridExtra)
+library(ggpubr)
+```
+
+```{r}
+
+s <- read_csv("~/Downloads/superbowl.csv")
+s
+superbowlrow <- c("Feb 7 2021", "LV (55)", "Tampa Bay Buccaneers", 31.0, "Kansas City Chiefs", 9.0, "Tom Brady", "Raymond James Stadium", "Tampa Bay", "Florida")
+superbowl <- rbind(superbowlrow, s)   
+superbowl$`Winner Pts` <- as.integer(superbowl$`Winner Pts`)
+superbowl$`Loser Pts` <- as.integer(superbowl$`Loser Pts`)
+
+```
+
+```{r}
+count_of_states <- superbowl %>%
+  group_by(State)
+count_of_states%>%
+  summarize(total = n()) 
+ggplot(data = count_of_states, aes(x = State)) + 
+  geom_bar()
+
+```
+```{r fig.width = 5}
+deficits_states <- superbowl %>%
+  mutate(deficit = `Winner Pts` - `Loser Pts`)%>%
+  mutate(Date = str_sub(Date, -4))
+deficits_states$Date <- as.numeric(deficits_states$Date)
+ggplot(data = deficits_states, aes(x = State, y = deficit, fill = State)) + 
+geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2, notch=FALSE) +
+  geom_point(alpha = 0.1)
+```
+
+```{r}
+trends <- superbowl %>%
+  mutate(Date = str_sub(Date, -4))
+trends$Date = as.numeric(trends$Date)
+x <- trends %>%
+  ggplot(aes(x = Date, y = `Winner Pts`, group = 1, color = State)) + 
+  geom_point()
+y <- trends %>%
+  ggplot(aes(x = Date, y = `Loser Pts`, group = 1)) + 
+  geom_point() 
+deficits <- deficits_states %>%
+  ggplot(aes(x = Date, y = deficit, group = 1, color = State, text = paste(Winner))) + 
+  geom_point() +
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) + 
+  scale_y_continuous(breaks = seq(0, 50, by = 5)) 
+def <- deficits_states %>%
+  ggplot(aes(x = Date, y = deficit, group = 1, text = paste(Winner))) + 
+  geom_line() +
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) + 
+  scale_y_continuous(breaks = seq(0, 50, by = 5))
+
+
+ggplotly(deficits)
+```
+
+```{r}
+ggplotly(def)
+```
+```{r}
+categories <- deficits_states
+categories <- categories%>%
+  mutate(year_ints = case_when(
+    (Date < 1981 & Date > 1970) ~ "1970-80",
+    (Date < 1991 & Date > 1980) ~ "1980-90",
+    (Date < 2001 & Date > 1990) ~ "1990-00",
+    (Date < 2011 & Date > 2000) ~ "2000-10",
+    (Date < 2021 & Date > 2010) ~ "2010-20",
+  ))%>%
+  na.omit()%>%
+  group_by(year_ints)%>%
+  select(deficit, year_ints)%>%
+  summarise_at(vars(deficit),              
+               list(`Mean Deficits` = mean)) 
+categories%>%
+  ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
+  geom_bar(stat = "identity")
+
+```
+
+```{r}
+categories2 <- deficits_states
+categories2 <- categories2%>%
+  mutate(year_ints = case_when(
+    (Date < 1976 & Date > 1970) ~ "1970-75",
+    (Date < 1981 & Date > 1975) ~ "1975-80",
+    (Date < 1986 & Date > 1980) ~ "1980-85",
+    (Date < 1991 & Date > 1985) ~ "1985-90",
+    (Date < 1996 & Date > 1990) ~ "1990-1995",
+    (Date < 2001 & Date > 1995) ~ "1995-2000",
+    (Date < 2006 & Date > 2000) ~ "2000-2005",
+    (Date < 2011 & Date > 2005) ~ "2005-2010",
+    (Date < 2016 & Date > 2010) ~ "2010-2015",
+    (Date < 2021 & Date > 2015) ~ "2015-2020",
+    
+  ))%>%
+  na.omit()%>%
+  group_by(year_ints)%>%
+  select(deficit, year_ints)%>%
+  summarise_at(vars(deficit),              
+               list(`Mean Deficits` = mean)) 
+categories%>%
+  ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
+  geom_bar(stat = "identity")
+categories2%>%
+  ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
+  geom_bar(stat = "identity")
+```
+
+```{r, fig.width= 20}
+p = trends%>%
+  ggplot(aes(x = Date), text = paste("Winner " = Winner)) + 
+  geom_line(aes(y = `Winner Pts`), color = "navy", group = 1) +
+  geom_line(aes(y = `Loser Pts`), color = "  dark red", group = 1) + 
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5))
+ggplotly(p)
+```
+
+```{r}
+modified <- superbowl%>%  
+  mutate(deficit = `Winner Pts` - `Loser Pts`)%>%
+  mutate(winning_division = case_when(
+                            Winner %in% c('Kansas City Chiefs', 'Denver Broncos', 'Oakland Raiders', 'Los Angeles Raiders', 'San Diego Chargers') ~ 'AFC West', 
+                            Winner %in% c('Chicago Bears', 'Green Bay Packers', 'Minnesota Vikings', 'Detroit Lions') ~ 'NFC North', 
+                            Winner %in% c('Seattle Seahawks', 'San Francisco 49ers', 'Arizona Cardinals', 'Los Angeles Rams', 'St. Louis Rams') ~ 'NFC West', 
+                            Winner %in% c('Indianapolis Colts', 'Baltimore Colts', 'Tennessee Titans', 'Houston Texans', 'Jacksonville Jaguars') ~ 'AFC South', 
+                            Winner %in% c('Pittsburgh Steelers', 'Cleveland Browns', 'Cincinnati Bengals', 'Baltimore Ravens') ~ 'AFC North', 
+                            Winner %in% c('New Orleans Saints', 'Carolina Panthers', 'Atlanta Falcons', 'Tampa Bay Buccaneers') ~ 'NFC South',
+                            Winner %in% c('New England Patriots', 'Miami Dolphins', 'Buffalo Bills', 'New York Jets') ~ 'AFC East',
+                            Winner %in% c('Dallas Cowboys', 'Philadelphia Eagles', 'New York Giants', 'Washington Redskins') ~ 'NFC East'))%>%
+  mutate(losing_division = case_when(
+                            Loser %in% c('Kansas City Chiefs', 'Denver Broncos', 'Oakland Raiders', 'Los Angeles Raiders', 'San Diego Chargers') ~ 'AFC West', 
+                            Loser %in% c('Chicago Bears', 'Green Bay Packers', 'Minnesota Vikings', 'Detroit Lions') ~ 'NFC North', 
+                            Loser %in% c('Seattle Seahawks', 'San Francisco 49ers', 'Arizona Cardinals', 'Los Angeles Rams', 'St. Louis Rams') ~ 'NFC West', 
+                            Loser %in% c('Indianapolis Colts', 'Baltimore Colts', 'Tennessee Titans', 'Houston Texans', 'Jacksonville Jaguars') ~ 'AFC South', 
+                            Loser %in% c('Pittsburgh Steelers', 'Cleveland Browns', 'Cincinnati Bengals', 'Baltimore Ravens') ~ 'AFC North', 
+                            Loser %in% c('New Orleans Saints', 'Carolina Panthers', 'Atlanta Falcons', 'Tampa Bay Buccaneers') ~ 'NFC South',
+                            Loser %in% c('New England Patriots', 'Miami Dolphins', 'Buffalo Bills', 'New York Jets') ~ 'AFC East',
+                            Loser %in% c('Dallas Cowboys', 'Philadelphia Eagles', 'New York Giants', 'Washington Redskins') ~ 'NFC East'))%>%
+  mutate(winning_conf = case_when(
+                            winning_division %in% c('AFC West', 'AFC South', 'AFC North', 'AFC East') ~ 'AFC', 
+                            winning_division %in% c('NFC West', 'NFC South', 'NFC North', 'NFC East') ~ 'NFC' 
+                                ))%>%
+  mutate(losing_conf = case_when(
+                            losing_division %in% c('AFC West', 'AFC South', 'AFC North', 'AFC East') ~ 'AFC', 
+                            losing_division %in% c('NFC West', 'NFC South', 'NFC North', 'NFC East') ~ 'NFC'))%>%
+  mutate(Date = str_sub(Date, -4))
+
+```
+
+```{r}
+windivision <- ggplot(data = modified, aes(x = winning_division, fill = winning_division)) + 
+  geom_histogram(stat = "count", position="dodge")+
+  scale_y_continuous(breaks = 0:15) + 
+  theme(legend.position = "none") + 
+  labs(title = "Super Bowl Wins by Division", x = "Winning Division", y = "Wins") 
+
+
+losedivision <- ggplot(data = modified, aes(x = losing_division, fill = losing_division)) + 
+  geom_histogram(stat = "count", position="dodge")+
+  scale_y_continuous(breaks = 0:15) + 
+  theme(legend.position = "none") + 
+  labs(title = "Super Bowl Loses by Division", x = "Losing Division", y = "Loses")  
+ 
+
+conference <- ggplot(data = modified, aes(x = winning_conf, fill = winning_conf)) + 
+  geom_histogram(stat = "count")+
+  scale_y_continuous(breaks = 0:30) + 
+  theme(legend.position = "none") + 
+  scale_y_continuous(breaks = seq(25, 30, by = 1)) + 
+theme_minimal()
+
+conference
+
+```
+```{r, fig.width = 6, fig.height= 6}
+ggarrange(windivision, losedivision, nrow=2)  
+
+```
+
+```{r, fig.width=20, fig.height=5}
+modified$Date = as.numeric(modified$Date)
+
+date_div = modified%>%
+  ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
+  geom_line(group = 1, alpha = 0.1) + 
+  geom_point(aes(color = winning_division)) 
+ggplotly(date_div)
+
+```
+
+```{r, fig.width=20, fig.height=5}
+date_div2 = modified%>%
+  ggplot(aes(x = Date, y = `Loser Pts`, text = paste(Loser))) +
+  geom_line(group = 1, alpha = 0.1) + 
+  geom_point(aes(color = losing_division)) 
+ggplotly(date_div2)
+
+g<-ggarrange(date_div,date_div2, ncols = 2)
+ggplotly(g)
+
+```
+
+```{r}
+f <- modified%>%
+  ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
+  geom_point(aes(color = winning_conf)) + 
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5))
+ggplotly(f)
+```
+
