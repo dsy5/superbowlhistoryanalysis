@@ -18,6 +18,7 @@ library(tidyverse)
 library(dplyr)
 library(plotly)
 library(gridExtra)
+library(ggthemes)
 library(ggpubr)
 ```
 
@@ -38,7 +39,7 @@ count_of_states <- superbowl %>%
 count_of_states%>%
   summarize(total = n()) 
 ggplot(data = count_of_states, aes(x = State)) + 
-  geom_bar()
+  geom_bar() 
 
 ```
 ```{r fig.width = 5}
@@ -83,11 +84,11 @@ ggplotly(def)
 categories <- deficits_states
 categories <- categories%>%
   mutate(year_ints = case_when(
-    (Date < 1981 & Date > 1970) ~ "1970-80",
-    (Date < 1991 & Date > 1980) ~ "1980-90",
-    (Date < 2001 & Date > 1990) ~ "1990-00",
-    (Date < 2011 & Date > 2000) ~ "2000-10",
-    (Date < 2021 & Date > 2010) ~ "2010-20",
+    (Date < 1981 & Date > 1970) ~ "1970-1980",
+    (Date < 1991 & Date > 1980) ~ "1980-1990",
+    (Date < 2001 & Date > 1990) ~ "1990-2000",
+    (Date < 2011 & Date > 2000) ~ "2000-2010",
+    (Date < 2021 & Date > 2010) ~ "2010-2020",
   ))%>%
   na.omit()%>%
   group_by(year_ints)%>%
@@ -96,7 +97,9 @@ categories <- categories%>%
                list(`Mean Deficits` = mean)) 
 categories%>%
   ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity") +
+    stat_summary(fun.y=sum,geom="bar",colour="black",fill="#CC6666",show.legend = FALSE) + 
+  labs(x = "10-Year Period", y = "Mean Deficits", title = "Which 10-Year Period Had More Lopsided Games?")
 
 ```
 
@@ -104,37 +107,93 @@ categories%>%
 categories2 <- deficits_states
 categories2 <- categories2%>%
   mutate(year_ints = case_when(
-    (Date < 1976 & Date > 1970) ~ "1970-75",
-    (Date < 1981 & Date > 1975) ~ "1975-80",
-    (Date < 1986 & Date > 1980) ~ "1980-85",
-    (Date < 1991 & Date > 1985) ~ "1985-90",
+    (Date < 1976 & Date > 1970) ~ "1970-1975",
+    (Date < 1981 & Date > 1975) ~ "1975-1980",
+    (Date < 1986 & Date > 1980) ~ "1980-1985",
+    (Date < 1991 & Date > 1985) ~ "1985-1990",
     (Date < 1996 & Date > 1990) ~ "1990-1995",
     (Date < 2001 & Date > 1995) ~ "1995-2000",
     (Date < 2006 & Date > 2000) ~ "2000-2005",
     (Date < 2011 & Date > 2005) ~ "2005-2010",
     (Date < 2016 & Date > 2010) ~ "2010-2015",
     (Date < 2021 & Date > 2015) ~ "2015-2020",
-    
   ))%>%
   na.omit()%>%
   group_by(year_ints)%>%
   select(deficit, year_ints)%>%
   summarise_at(vars(deficit),              
-               list(`Mean Deficits` = mean)) 
-categories%>%
-  ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
-  geom_bar(stat = "identity")
+               list(`Mean Deficits` = mean))
+
+```
+
+```{r}
 categories2%>%
   ggplot(aes(x = year_ints, y = `Mean Deficits`)) + 
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity") +
+    stat_summary(fun.y=sum,geom="bar",colour="black",fill="#92A8D1",show.legend = FALSE) +
+    labs(x = "5-Year Period", y = "Mean Deficits", title = "Which 5-Year Period Had More Lopsided Games?") + 
+  theme_classic()
+
+
 ```
+```{r}
+total_points <- superbowl%>%
+  mutate(Date = str_sub(Date, -4))
+total_points$Date <- as.numeric(total_points$Date)
+total_points <- total_points%>%
+  mutate(year_ints_by_5 = case_when(
+    (Date < 1976 & Date > 1970) ~ "1970-75",
+    (Date < 1981 & Date > 1975) ~ "1975-80",
+    (Date < 1986 & Date > 1980) ~ "1980-85",
+    (Date < 1991 & Date > 1985) ~ "1985-90",
+    (Date < 1996 & Date > 1990) ~ "1990-95",
+    (Date < 2001 & Date > 1995) ~ "1995-00",
+    (Date < 2006 & Date > 2000) ~ "2000-05",
+    (Date < 2011 & Date > 2005) ~ "2005-10",
+    (Date < 2016 & Date > 2010) ~ "2010-15",
+    (Date < 2021 & Date > 2015) ~ "2015-20",
+  ))%>%
+  mutate(year_ints_by_10 = case_when(
+    (Date < 1981 & Date > 1970) ~ "1970-80",
+    (Date < 1991 & Date > 1980) ~ "1980-90",
+    (Date < 2001 & Date > 1990) ~ "1990-00",
+    (Date < 2011 & Date > 2000) ~ "2000-10",
+    (Date < 2021 & Date > 2010) ~ "2010-20",
+  ))%>%
+  na.omit()%>%
+  mutate(total_points = `Winner Pts` + `Loser Pts`)
+total_points%>%
+  ggplot(aes(x = year_ints_by_5, y = total_points)) + 
+  geom_bar(stat = "identity") +
+  stat_summary(fun.y=sum,geom="bar",colour="black",fill="#92A8D1",show.legend = FALSE) +
+  labs(x = "5-Year Period", y = "Total Points", title = "Which 5-Year Period Consisted of High-Scoring Games?", subtitle = "287 points were scored between the 1990-1991 and 1994-1995 season") +
+  theme_classic()
+
+
+
+```
+
+```{r}
+total_points%>%
+  ggplot(aes(x = year_ints_by_10, y = total_points)) + 
+  geom_bar(stat = "identity") +
+    stat_summary(fun.y=sum,geom="bar",colour="black",fill="#CC6666",show.legend = FALSE)+
+  labs(x = "10-Year Period", y = "Total Points", title = "Which 10-Year Period Consisted of High-Scoring Games?", subtitle= "534 points were scored between the Superbowls of the 1990-1991 and 1999-2000 season") + 
+  scale_y_continuous(breaks = seq(0, 600, by = 100)) +
+  theme_classic()
+```
+
 
 ```{r, fig.width= 20}
 p = trends%>%
   ggplot(aes(x = Date), text = paste("Winner " = Winner)) + 
   geom_line(aes(y = `Winner Pts`), color = "navy", group = 1) +
   geom_line(aes(y = `Loser Pts`), color = "  dark red", group = 1) + 
-  scale_x_continuous(breaks = seq(1970, 2021, by = 5))
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) +
+  labs(x = "Year", y = "Points", title = "Trends in Super Bowl Winning and Losing Scores") + 
+  theme(plot.title = element_text(size=22))  +
+  theme_solarized()
+
 ggplotly(p)
 ```
 
@@ -175,38 +234,79 @@ windivision <- ggplot(data = modified, aes(x = winning_division, fill = winning_
   geom_histogram(stat = "count", position="dodge")+
   scale_y_continuous(breaks = 0:15) + 
   theme(legend.position = "none") + 
-  labs(title = "Super Bowl Wins by Division", x = "Winning Division", y = "Wins") 
+  labs(title = "Super Bowl Wins by Division", x = "Winning Division", y = "Wins") +
+  theme_tufte()
 
 
 losedivision <- ggplot(data = modified, aes(x = losing_division, fill = losing_division)) + 
   geom_histogram(stat = "count", position="dodge")+
   scale_y_continuous(breaks = 0:15) + 
   theme(legend.position = "none") + 
-  labs(title = "Super Bowl Loses by Division", x = "Losing Division", y = "Loses")  
+  labs(title = "Super Bowl Loses by Division", x = "Losing Division", y = "Loses") +
+  theme_tufte()
  
 
 conference <- ggplot(data = modified, aes(x = winning_conf, fill = winning_conf)) + 
   geom_histogram(stat = "count")+
   scale_y_continuous(breaks = 0:30) + 
   theme(legend.position = "none") + 
-  scale_y_continuous(breaks = seq(25, 30, by = 1)) + 
-theme_minimal()
+  scale_y_continuous(breaks = seq(0, 30, by = 1)) + 
+  labs(x = "Conference", y = "Super Bowl Wins", fill = "Conference") + 
+  theme_wsj() +
+  theme(axis.text.y = element_text(size=8)) +
+  theme(axis.title = element_text(size = 12)) + 
+  theme(legend.position = "none") 
+
 
 conference
 
 ```
-```{r, fig.width = 6, fig.height= 6}
+```{r}
+points_conf_win <- modified
+win <- points_conf_win%>%
+  select(`Winner Pts`, winning_conf)%>% 
+  group_by(winning_conf)%>%
+  summarise(Points = sum(`Winner Pts`))
+loss <- points_conf_win%>%
+  select(`Loser Pts`, losing_conf)%>% 
+  group_by(losing_conf)%>%
+  summarise(Points = sum(`Loser Pts`))
+t <- bind_rows(win, loss)
+t <- t%>%
+  unite(conference, winning_conf, losing_conf)%>%
+  select(conference, Points)
+t[1,1] = str_sub(t[1,1], start = 0, end = 3)
+t[2,1] = str_sub(t[2,1], start = 0, end = 3)
+t[3,1] = str_sub(t[3,1], start = 4)
+t[4,1] = str_sub(t[4,1], start = 4)
+t%>%
+  group_by(conference)%>%
+  summarise(`Total Points` = sum(Points))%>%
+  ggplot(aes(x = conference, y = `Total Points`, fill = conference)) + 
+  geom_bar(stat = "identity") + 
+  theme_wsj() + 
+  theme(axis.title = element_text(size = 12)) + 
+  scale_y_continuous(breaks = seq(0, 1500, by = 100)) + 
+  labs(x = "Conference", y = "Total Points", fill = "Conference", title = "Which Conference Has Scored More Points?") + 
+  theme(legend.position = "none") +
+  theme(plot.title = element_text(size = 15))
+
+```
+
+```{r, fig.width = 10, fig.height= 10}
 ggarrange(windivision, losedivision, nrow=2)  
 
 ```
 
-```{r, fig.width=20, fig.height=5}
+```{r, fig.width=25, fig.height=5}
 modified$Date = as.numeric(modified$Date)
 
 date_div = modified%>%
   ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
   geom_line(group = 1, alpha = 0.1) + 
-  geom_point(aes(color = winning_division)) 
+  geom_point(aes(color = winning_division)) +
+  theme_economist() +
+  theme(legend.text = element_text(size=10)) 
 ggplotly(date_div)
 
 ```
@@ -215,19 +315,22 @@ ggplotly(date_div)
 date_div2 = modified%>%
   ggplot(aes(x = Date, y = `Loser Pts`, text = paste(Loser))) +
   geom_line(group = 1, alpha = 0.1) + 
-  geom_point(aes(color = losing_division)) 
+  geom_point(aes(color = losing_division)) +
+  theme_economist() +
+  theme(legend.text = element_text(size=10))
 ggplotly(date_div2)
 
-g<-ggarrange(date_div,date_div2, ncols = 2)
-ggplotly(g)
 
 ```
 
-```{r}
+```{r, fig.width=25, fig.height=5}
 f <- modified%>%
   ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
   geom_point(aes(color = winning_conf)) + 
-  scale_x_continuous(breaks = seq(1970, 2021, by = 5))
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) +
+  theme_economist() +
+  theme(legend.text = element_text(size=10)) +
+  labs(fill = "Conference", x = "Year", y = "Winner Pts") 
 ggplotly(f)
 ```
 
