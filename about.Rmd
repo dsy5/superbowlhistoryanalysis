@@ -1,7 +1,16 @@
 ---
 title: "About this site"
-description: |
-  Some additional details about the website
+description: "\nThe Super Bowl is one of, if not, America's most historic and prized
+  cultural events. Every year, the games draw millions of viewers from around the
+  country and world, creating a centripetal force that connects us viewers together
+  for entertainment and unexpected drama. \n\nIn my second data science project, I
+  decided to conduct exploratory data analysis on the first 55 Super Bowls in NFL
+  History (from the 1966-1967 NFL Season to the 2020-2021 NFL Season), highlighting
+  various trends in our games through stunning, colorful graphs. Although trends visualized through my analysis may
+  not seem applicable to future games, it is interesting to note different patterns
+  that have arisen throughout NFL's treasured and unpredictable history. \n\nI used
+  the programming language *R* to achieve my goals. \n\nVisit my GitHub repository
+  to see the code behind my works: \n"
 ---
 
 ```{r setup, include=FALSE}
