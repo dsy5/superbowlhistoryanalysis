@@ -26,28 +26,37 @@ library(ggpubr)
 ```{r}
 
 s <- read_csv("~/Downloads/superbowl.csv")
-s
 superbowlrow <- c("Feb 7 2021", "LV (55)", "Tampa Bay Buccaneers", 31.0, "Kansas City Chiefs", 9.0, "Tom Brady", "Raymond James Stadium", "Tampa Bay", "Florida")
 superbowl <- rbind(superbowlrow, s)   
 superbowl$`Winner Pts` <- as.integer(superbowl$`Winner Pts`)
 superbowl$`Loser Pts` <- as.integer(superbowl$`Loser Pts`)
 
+
 ```
+
+First, let's find out how many games each state hosted.
+
+
 
 ```{r}
 count_of_states <- superbowl %>%
-  group_by(State)
-count_of_states%>%
-  summarize(total = n()) 
-ggplot(data = count_of_states, aes(x = State)) + 
-  geom_bar(color = "black", fill = "maroon") +
+  group_by(State) %>%
+  summarize(total = n()) %>%
+  ggplot(aes(x = State, y = total)) + 
+  geom_bar(color = "black", fill = "maroon", stat = "identity") +
   theme(panel.background = element_rect(fill = "light blue")) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   scale_y_continuous(breaks = seq(0, 20, by = 2)) + 
   labs(x = "Super Bowl Host States", y = "Number of Super Bowl Games Hosted", title = "Which States Have Hosted More Games?", subtitle = "Florida has hosted the most Super Bowl games, while Indiana and New Jersey each have hosted once")  +
   theme(plot.subtitle = element_text(size = 10))
+count_of_states
 
 ```
+<aside>In the first 55 Super Bowls, the three states that were the most popular locations for games were Florida, California, and Louisiana. Indiana and New Jersey only hosted the Super Bowl once, with those occurences in the 2010s.
+</aside>
+
+We can look at a representation of which states hosted not only the most Super Bowls, but the most competitive ones as well via a boxplot.
+
 ```{r fig.width = 15, fig.height=10}
 deficits_states <- superbowl %>%
   mutate(deficit = `Winner Pts` - `Loser Pts`)%>%
@@ -57,7 +66,22 @@ ggplot(data = deficits_states, aes(x = State, y = deficit, fill = State)) +
 geom_boxplot(outlier.colour="black", outlier.shape=16, outlier.size=2, notch=FALSE) +
   geom_point(alpha = 0.1) + 
   theme(axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 20), axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.text = element_text(size = 16), legend.title = element_text(size = 16))
+
 ```
+<aside>The boxplot enables us to make a few conclusions about the data. 
+
+We can see that California tends to host more non-competitive games, whereas Florida (the state that has hosted the most Super Bowls so far) holds more competitive matches than California. 
+
+States like Arizona and Michigan also have hosted close matches.
+</aside>
+
+We can look at another graphical depiction in the form of a scatter plot below regarding the deficits in Super Bowl games and the states that have hosted them.
+
+A few notes:
+
+- Double click on a label in the key to isolate that label in the graph
+- Single click on a label in the key to remove data from the label in the graph
+- Hover your cursor over a data point in the graph to view specific data regarding the data, deficit, host state, and winning team
 
 ```{r}
 trends <- superbowl %>%
@@ -73,20 +97,31 @@ deficits <- deficits_states %>%
   ggplot(aes(x = Date, y = deficit, group = 1, color = State, text = paste(Winner))) + 
   geom_point() +
   scale_x_continuous(breaks = seq(1970, 2021, by = 5)) + 
-  scale_y_continuous(breaks = seq(0, 50, by = 5)) 
-def <- deficits_states %>%
-  ggplot(aes(x = Date, y = deficit, group = 1, text = paste(Winner))) + 
-  geom_line() +
-  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) + 
-  scale_y_continuous(breaks = seq(0, 50, by = 5))
+  scale_y_continuous(breaks = seq(0, 50, by = 5)) +
+  labs(x = "Year", y = "Deficit", title = "Which States Have Hosted More Competitive Matches?")
 
 
 ggplotly(deficits)
 ```
+<aside>
+Through the scatter graph, we can even visualize how host states have changed throughout the treasured history of the Super Bowl. 
+
+We can extract information about which states have hosted Super Bowls frequently in a specific decade or time period. 
+
+Play around with the *plotly* tools to unravel some insightful trends
+</aside>
 
 ```{r}
+def <- deficits_states %>%
+  ggplot(aes(x = Date, y = deficit, group = 1, text = paste(Winner))) + 
+  geom_line(color = "dark green") +
+  scale_x_continuous(breaks = seq(1970, 2021, by = 5)) + 
+  scale_y_continuous(breaks = seq(0, 50, by = 5)) + 
+  theme_minimal()
 ggplotly(def)
 ```
+Now, let's see which 10-year period had more lopsided games. Lopsided games are games where the deficit is significantly high, implying that one team scores significantly higher than the other.
+
 ```{r}
 categories <- deficits_states
 categories <- categories%>%
@@ -110,6 +145,10 @@ categories%>%
   theme_classic()
 
 ```
+<aside>We can see in the bar graph that the 1980s brought more less competitive Super Bowl matches, whereas the 2010s brought more competitive matches.
+</aside>
+
+What will we find if we divide each 10-year period into 5-year periods?
 
 ```{r}
 categories2 <- deficits_states
@@ -147,6 +186,12 @@ categories2%>%
 
 
 ```
+<aside>
+We can see that the matches between 1985 and 1990 were much less competitive than the games in other periods.
+</aside>
+
+Now, which 5-year period had more high-scoring Super Bowl matches?
+
 ```{r}
 total_points <- superbowl%>%
   mutate(Date = str_sub(Date, -4))
@@ -184,6 +229,11 @@ total_points%>%
 
 
 ```
+<aside>The bar graph shows that the era between 1990-1995 was the most high-scoring era for Super Bowl games overall.
+
+</aside>
+
+We can even enlarge the scale to 10-year periods to see which decade boasted more high-scoring games overall.
 
 ```{r}
 total_points%>%
@@ -194,7 +244,11 @@ total_points%>%
   scale_y_continuous(breaks = seq(0, 600, by = 100)) +
   theme_classic()
 ```
+<aside>The bar graph shows that the 1990s boasted high-scoring matches overall.
 
+</aside>
+
+Let's now take a general look at how Super Bowl winning and losing scores trended over the first 55 years.
 
 ```{r, fig.width= 20}
 p = trends%>%
@@ -208,6 +262,9 @@ p = trends%>%
 
 ggplotly(p)
 ```
+<aside>There are several periods where the gap between the winning and losing scores are significant, while there are a few periods where the gap is miniscule.
+
+</aside>
 
 ```{r}
 modified <- superbowl%>%  
@@ -240,6 +297,7 @@ modified <- superbowl%>%
   mutate(Date = str_sub(Date, -4))
 
 ```
+The NFL is comprised of two primary conferences: the AFC and the NFC. In the Super Bowl, one team from the AFC faces one team from the NFC. Let's see which conference has won the most Super Bowls so far.
 
 ```{r}
 windivision <- ggplot(data = modified, aes(x = winning_division, fill = winning_division)) + 
@@ -265,16 +323,20 @@ conference <- ggplot(data = modified, aes(x = winning_conf, fill = winning_conf)
   scale_y_continuous(breaks = 0:30) + 
   theme(legend.position = "none") + 
   scale_y_continuous(breaks = seq(0, 30, by = 1)) + 
-  labs(x = "Conference", y = "Super Bowl Wins", fill = "Conference") + 
+  labs(x = "Conference", y = "Super Bowl Wins", fill = "Conference", title = "Which Conference has Won the Most Super Bowls") + 
   theme_wsj() +
   theme(axis.text.y = element_text(size=8)) +
   theme(axis.title = element_text(size = 12)) + 
-  theme(legend.position = "none") 
+  theme(legend.position = "none")  
 
 
 conference
 
 ```
+<aside>It is evident that the NFC has won one more Super Bowl than the AFC.
+
+</aside>
+
 ```{r}
 points_conf_win <- modified
 win <- points_conf_win%>%
@@ -306,6 +368,9 @@ t%>%
   theme(plot.title = element_text(size = 15))
 
 ```
+<aside>The NFC has also scored more points than the AFC.
+
+</aside>
 
 ```{r, fig.width = 10, fig.height= 10}
 ggarrange(windivision, losedivision, nrow=2)  
