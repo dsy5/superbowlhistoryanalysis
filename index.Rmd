@@ -418,6 +418,7 @@ ggplotly(date_div2)
 
 ```
 Similar to the graphs regarding trends in winning and losing scores labeled by division, we can compare trends by conference as well.
+
 ```{r, fig.width=30, fig.height=5}
 f <- modified%>%
   ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
