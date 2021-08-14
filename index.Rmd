@@ -372,10 +372,20 @@ t%>%
 
 </aside>
 
+Each conference has four divisions. Let's see which division contributes most to Super Bowl wins by examining the number of games won by each division. Conversely, we can see which division has lost the most games.
+
 ```{r, fig.width = 10, fig.height= 10}
 ggarrange(windivision, losedivision, nrow=2)  
 
 ```
+
+<aside>The NFC East has won more Super Bowl games, while the AFC East has lost more Super Bowl games.
+
+</aside>
+
+The bottom two graphs highlights a line graph representing trends in winning scores, while each point is colored by a division. Take advantage of the *plotly* features to examine the graph.
+
+The two graphs allows us to see various trends, including which division appeared the most (and the least) in Super Bowl matches, which division participated the most in various decades, and even which division tends to score more.
 
 ```{r, fig.width=25, fig.height=5}
 modified$Date = as.numeric(modified$Date)
@@ -407,7 +417,7 @@ ggplotly(date_div2)
 
 
 ```
-
+Similar to the graphs regarding trends in winning and losing scores labeled by division, we can compare trends by conference as well.
 ```{r, fig.width=30, fig.height=5}
 f <- modified%>%
   ggplot(aes(x = Date, y = `Winner Pts`, text = paste(Winner))) +
