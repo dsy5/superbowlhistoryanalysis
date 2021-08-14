@@ -10,7 +10,7 @@ description: "\nThe Super Bowl is one of, if not, America's most historic and pr
   not seem applicable to future games, it is interesting to note different patterns
   that have arisen throughout NFL's treasured and unpredictable history. \n\nI used
   the programming language *R* to achieve my goals. \n\nVisit my GitHub repository
-  to see the code behind my works: \n"
+  to see the code behind my works: https://github.com/dsy5/superbowlhistoryanalysis \n"
 ---
 
 ```{r setup, include=FALSE}
